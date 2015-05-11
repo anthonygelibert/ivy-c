@@ -344,8 +344,8 @@ Server SocketServer(int ipv6, unsigned short port,
 
 	if (setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (char *)&one, sizeof (one)) < 0)
 	  {
-	    perror ("*** set socket option REUSEPORT ***");
-	    exit(0);
+	    perror ("*** WARNING non existent socket option REUSEPORT, Ivy may FAIL ***");
+	    //	    exit(0);
 	  }
 #endif
 	
@@ -951,10 +951,10 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 #ifdef SO_REUSEPORT
 
 	if (setsockopt (handle, SOL_SOCKET, SO_REUSEPORT, (char *)&on, sizeof (on)) < 0)
-		{
-			perror ("*** set socket option REUSEPORT ***");
-			return NULL;
-		}
+	  {
+	    perror ("*** WARNING non existent socket option REUSEPORT, Ivy may FAIL ***");
+	    //return NULL;
+	  }
 #endif
 	/* wee need to broadcast */
 	if (setsockopt (handle, SOL_SOCKET, SO_BROADCAST, (char *)&on, sizeof (on)) < 0)
