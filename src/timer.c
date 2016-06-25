@@ -28,19 +28,19 @@
 #include "list.h"
 #include "timer.h"
 
-#define BIGVALUE 2147483647
-#define MILLISEC 1000
+#define BIGVALUE (2147483647L)
+#define MILLISEC ((unsigned long long) 1000)
 
 static struct timeval *timeoutptr = NULL;
 static struct timeval selectTimeout = { BIGVALUE, 0 };
 /* la prochaine echeance */
-static unsigned long nextTimeout = BIGVALUE;
+static unsigned long long nextTimeout = BIGVALUE;
 
 struct _timer {
 	struct _timer *next;
 	int	repeat;
 	unsigned long period;
-	unsigned long when;
+    unsigned long long when;
 	TimerCb callback;
 	void *user_data;
         unsigned char mark2Remove;
@@ -49,33 +49,34 @@ struct _timer {
 /* liste des timers */
 TimerId timers = NULL;
 
-static long currentTime()
+static unsigned long long currentTime()
 {	
-	unsigned long current;
+    unsigned long long current, micro;
 #ifdef WIN32
 	current = GetTickCount();
 #else
 	struct timeval stamp;
 	gettimeofday( &stamp, NULL );
-	current = stamp.tv_sec * MILLISEC + stamp.tv_usec/MILLISEC;
+    current = (unsigned long long)(stamp.tv_sec) * MILLISEC + (unsigned long long) stamp.tv_usec / MILLISEC;
 #endif
 	return  current;
 }
-static void SetNewTimeout( unsigned long current, unsigned long when )
+static void SetNewTimeout( unsigned long long current, unsigned long long when )
 {
-	unsigned long ltime;
+    unsigned long long ltime;
 	ltime = (when <= current) ? 0 : when - current;
 	nextTimeout = when;
-	selectTimeout.tv_sec = ltime / MILLISEC;
-	selectTimeout.tv_usec = (ltime - selectTimeout.tv_sec* MILLISEC) * MILLISEC;
+    selectTimeout.tv_sec = (long) (ltime / MILLISEC);
+    selectTimeout.tv_usec = (ltime - (unsigned long long)(selectTimeout.tv_sec * MILLISEC)) * MILLISEC;
 	if ( timeoutptr == NULL )
 				timeoutptr = &selectTimeout;
 	/*printf("New timeout %lu\n", ltime );*/
 }
-static void AdjTimeout(unsigned long current)
+static void AdjTimeout(unsigned long long current)
 {
-	unsigned long newTimeout;
+    unsigned long long newTimeout;
 	TimerId timer;
+
 	if ( timers )
 	{
 	/* recherche de la plus courte echeance dans la liste */
@@ -97,7 +98,7 @@ static void AdjTimeout(unsigned long current)
 
 TimerId TimerRepeatAfter( int count, long ltime, TimerCb cb, void *user_data )
 {
-	unsigned long stamp;
+    unsigned long long stamp;
 	TimerId timer;
 
 	/* si y a rien a faire et ben on fait rien */
@@ -118,7 +119,7 @@ TimerId TimerRepeatAfter( int count, long ltime, TimerCb cb, void *user_data )
 }
 void TimerRemove( TimerId timer )
 {
-	unsigned long stamp;
+    unsigned long long stamp;
 	if (( !timer ) || (timer->mark2Remove)) return;
 	//	IVY_LIST_REMOVE( timers, timer );
 	timer->mark2Remove = 1;
@@ -127,7 +128,7 @@ void TimerRemove( TimerId timer )
 }
 void TimerModify( TimerId timer, long ltime )
 {
-	unsigned long stamp;
+    unsigned long long stamp;
 	if (( !timer ) || (timer->mark2Remove)) return;
 
 	stamp = currentTime();
@@ -139,7 +140,7 @@ void TimerModify( TimerId timer, long ltime )
 
 struct timeval *TimerGetSmallestTimeout()
 {
-	unsigned long stamp;
+    unsigned long long stamp;
 	/* recalcul du prochain timeout */
 	stamp = currentTime();
 	AdjTimeout( stamp );
@@ -148,10 +149,10 @@ struct timeval *TimerGetSmallestTimeout()
 
 void TimerScan()
 {
-	unsigned long stamp;
+    unsigned long long stamp;
 	TimerId timer;
 	TimerId next;
-	unsigned long delta;
+    unsigned long long delta;
 	int timer_echu = 0;
 	
 	stamp = currentTime();
